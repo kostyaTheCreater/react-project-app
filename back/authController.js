@@ -1,19 +1,20 @@
 const pg = require('pg');
+//const pool = new pg.Pool();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const {validationResult} = require('express-validator');
 const {secret} = require('./config')
 
-const client = new pg.Client({
+const client = new pg.Pool({
     host: 'localhost',
     user: 'postgres',
     database: 'usersdb',
     password: 'zxcvbnm1'
 });
 
-const generateAccessToken = (id) => {
+const generateAccessToken = (userid) => {
     const payload = {
-        id
+        id: userid
     }
     return jwt.sign(payload, secret, {expiresIn: '24h'});
 }
@@ -23,9 +24,9 @@ class authController{
         try{
             const errors = validationResult(req);
             if(!errors.isEmpty()){
-                return res.status(400).json({message: 'errors in registration', errors});
+                return res.status(400).json({message: `errors in registration`, errors});
             }
-            const {username, password} = req.body;
+            const {email, password} = req.body;
 
             client.connect(err => {
                 if (err) throw err;
@@ -38,7 +39,7 @@ class authController{
                         let isAuthorized = false;
 
                         rows.map(row => {
-                            if(row.username == username){
+                            if(row.email == email){
                                 isAuthorized = true;
                             }
                         })
@@ -47,16 +48,14 @@ class authController{
                         else return res.status(400).json({message: 'User was registered'});                        
                     })
 
-
                     function insertUser(){
 
                         const hashPassword = bcrypt.hashSync(password, 4);
 
-                        client.query(`INSERT INTO clients (username, password) 
-                        VALUES ('${username}', '${hashPassword}' );`)
+                        client.query(`INSERT INTO clients (email, password) 
+                        VALUES ('${email}', '${hashPassword}' );`)
                         .then(() => {
-                            console.log(2);
-                            return res.json({message: 'User was success registered'});
+                            return res.json({message: `User ${email} was success registered`});
                         })
                     }
                 }
@@ -70,7 +69,7 @@ class authController{
     
     async login(req, res){
         try{
-            const {username, password} = req.body;
+            const {email, password} = req.body;
             client.connect(err => {
                 if (err) throw err;
                 else {
@@ -84,7 +83,7 @@ class authController{
                         
                         let userPassword;
                         rows.map(row => {
-                            if(row.username == username){
+                            if(row.email == email){
                                 isExistUsername = true;
                                 userPassword = row.password;
                                 userId = row.id;

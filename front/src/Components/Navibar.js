@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import { Navbar, Nav, Button, Container, Modal, Form} from "react-bootstrap";
 import {Link} from 'react-router-dom';
 import styled from 'styled-components';
@@ -15,7 +15,44 @@ const Styles = styled.div `
 export default function NaviBar(){
 
     const [show, setShow] = useState(false);
-    
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [data, setData] = useState(null);
+
+    function handleChange(e){
+        let target = e.target;
+
+        switch(target.id){
+            case 'email':
+                setEmail(target.value);
+                break;
+            case 'password':
+                setPassword(target.value);
+                break;
+        }
+    }
+
+    function logIn(event){
+        event.preventDefault();
+
+        let user = JSON.stringify({
+            email: email,
+            password: password
+        });
+
+        fetch('/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json;charset=utf-8'
+            },
+            body: user
+        })
+        .then((res) => res.json())
+        .then((res) => {setData(res.message || res.token); console.log(res)});
+
+        setShow(false);
+    }
+
     const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);
     
@@ -42,6 +79,7 @@ export default function NaviBar(){
                     </Navbar.Collapse>
                     </Container>
                 </Navbar>
+                {/* <p>{!data ? "Loading" : data}</p> */}
             </Styles>
             <Modal show={show} onHide={handleClose}>
                 <Modal.Header closeButton>
@@ -51,16 +89,33 @@ export default function NaviBar(){
                     <Form>
                         <Form.Group controlId="fromBasicEmail">
                             <Form.Label>Email Adress</Form.Label>
-                            <Form.Control type="email" placeholder="Email"/>
+                            <Form.Control value={email} 
+                                id='email'
+                                type="email" 
+                                placeholder="Email"
+                                onChange={handleChange}
+                                />
                         </Form.Group>
                         <Form.Group controlId="fromBasicPassword">
                             <Form.Label>Password</Form.Label>
-                            <Form.Control type="password" placeholder="Password"/>
+                            <Form.Control value={password} 
+                                id='password'
+                                type="password" 
+                                placeholder="Password"
+                                onChange={handleChange}
+                                />
                         </Form.Group>
                         <Form.Group controlId="fromBasicCheckbox">
                             <Form.Check type="checkbox" label='Remember me'/>
                         </Form.Group>
                     </Form>
+                    <div className="d-grid gap-2">
+                        <Button variant="primary" 
+                            size='lg' 
+                            style={{marginTop: "10px"}}
+                            onClick={logIn}
+                        >Log</Button>
+                    </div>
                 </Modal.Body>
             </Modal>
         </>
