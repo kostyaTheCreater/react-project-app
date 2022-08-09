@@ -55,7 +55,7 @@ class authController{
                         client.query(`INSERT INTO clients (email, password) 
                         VALUES ('${email}', '${hashPassword}' );`)
                         .then(() => {
-                            return res.json({message: `User ${email} was success registered`});
+                            return res.json({message: `User ${email} was success registered`, status: true});
                         })
                     }
                 }
@@ -103,7 +103,7 @@ class authController{
                 }
 
                 const token = generateAccessToken(userId);
-                return res.json({token});
+                return res.json({token, status: true});
             }
 
         }catch(e){

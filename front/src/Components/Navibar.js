@@ -13,11 +13,12 @@ const Styles = styled.div `
 `;
 
 export default function NaviBar(){
-
+    const [data, setData] = useState(null);
     const [show, setShow] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [data, setData] = useState(null);
+    const [isLogin, setButton] = useState(false);
+    const [isAuth, setStatus] = useState(false);
 
     function handleChange(e){
         let target = e.target;
@@ -32,15 +33,16 @@ export default function NaviBar(){
         }
     }
 
-    function logIn(event){
-        event.preventDefault();
+    function authHandler(e){
+        e.preventDefault();
 
-        let user = JSON.stringify({
+        let auth = isLogin ? '/auth/login' : '/auth/registration';
+        const user = JSON.stringify({
             email: email,
             password: password
         });
 
-        fetch('/auth/login', {
+        fetch(auth, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json;charset=utf-8'
@@ -48,14 +50,24 @@ export default function NaviBar(){
             body: user
         })
         .then((res) => res.json())
-        .then((res) => {setData(res.message || res.token); console.log(res)});
-
-        setShow(false);
+        .then((res) => {setData(res.message || res.token); res.status ? setStatus(true) : setStatus(false)});
+        
+        setShow(false)
     }
 
-    const handleClose = () => setShow(false);
-    const handleShow = () => setShow(true);
-    
+    const handleClose = () => {
+        setShow(false)
+    };
+
+    const handleShow = (e) => {
+        let target = e.target;
+
+        if(target.id == 'logIn') setButton(true);
+        else setButton(false);
+
+        setShow(true)
+    };
+
     return (
         <>
             <Styles>
@@ -74,16 +86,22 @@ export default function NaviBar(){
                             </Nav.Link>
                         </Nav>
                         <Nav>
-                            <Button variant="light" className="me-2" onClick={handleShow}>Log In</Button>
+                            {
+                            isAuth ? <Button variant='light' onClick={() => setStatus(!isAuth)}>Sign out</Button> : 
+                            <div> 
+                                <Button variant="light" id='logIn' className="me-2" onClick={handleShow}>Log In</Button>
+                                <Button variant="light" id='signUp' className="me-2" onClick={handleShow}>Sign up</Button> 
+                            </div>
+                            }
                         </Nav>
                     </Navbar.Collapse>
                     </Container>
                 </Navbar>
-                {/* <p>{!data ? "Loading" : data}</p> */}
             </Styles>
+            {/* <p>{!data ? 'loading...' : data}</p> */}
             <Modal show={show} onHide={handleClose}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Log in</Modal.Title>
+                    <Modal.Title>Authorized</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Form>
@@ -105,19 +123,24 @@ export default function NaviBar(){
                                 onChange={handleChange}
                                 />
                         </Form.Group>
-                        <Form.Group controlId="fromBasicCheckbox">
-                            <Form.Check type="checkbox" label='Remember me'/>
-                        </Form.Group>
                     </Form>
+                
                     <div className="d-grid gap-2">
-                        <Button variant="primary" 
-                            size='lg' 
-                            style={{marginTop: "10px"}}
-                            onClick={logIn}
-                        >Log</Button>
-                    </div>
+                        {isLogin ? <AuthorizedButton handleRequest={authHandler} name='Log in'/> :
+                            <AuthorizedButton handleRequest={authHandler} name='Sign up'/>}
+                    </div> 
                 </Modal.Body>
             </Modal>
         </>
+    )
+}
+
+
+function AuthorizedButton(props){
+    return (
+        <Button variant="primary" 
+            size='lg' 
+            style={{marginTop: "10px"}}
+            onClick={props.handleRequest}>{props.name}</Button>
     )
 }
